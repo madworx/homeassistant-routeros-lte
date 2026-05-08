@@ -75,23 +75,21 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
 
     @staticmethod
     def _normalize_lte_data(lte: dict[str, Any]) -> None:
-        """Normalize LTE data by deriving missing fields from alternatives.
-
-        RouterOS uses 'current-cellid' instead of 'cell-id', and does not
-        return 'mcc'/'mnc' as separate fields.  MCC+MNC can be parsed from the
-        numeric 'current-operator' value (e.g. '24701' -> MCC=247, MNC=01).
-        """
-        # Map current-cellid -> cell-id
+        """Normalize LTE data fields in place."""
+        # Map current-cellid to cell-id if not already present
         if "cell-id" not in lte and "current-cellid" in lte:
             lte["cell-id"] = lte["current-cellid"]
 
-        # Parse MCC / MNC from current-operator (numeric PLMN code)
-        operator = str(lte.get("current-operator", ""))
-        if operator.isdigit() and len(operator) in (5, 6):
-            if "mcc" not in lte:
-                lte["mcc"] = operator[:3]
-            if "mnc" not in lte:
-                lte["mnc"] = operator[3:]
+        # Parse MCC/MNC from numeric current-operator if not already present
+        operator = lte.get("current-operator")
+        if operator is not None and "mcc" not in lte and "mnc" not in lte:
+            try:
+                op_str = str(int(operator))
+                if len(op_str) in (5, 6):
+                    lte["mcc"] = op_str[:3]
+                    lte["mnc"] = op_str[3:]
+            except (ValueError, TypeError):
+                pass
 
     def _fetch_data(self) -> RouterOSData:
         """Fetch data from the RouterOS device (runs in executor)."""
