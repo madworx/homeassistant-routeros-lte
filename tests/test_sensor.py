@@ -1,6 +1,5 @@
 """Tests for RouterOS LTE sensors."""
 
-
 from custom_components.routeros_lte.coordinator import RouterOSData
 
 
