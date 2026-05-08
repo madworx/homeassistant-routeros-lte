@@ -35,9 +35,7 @@ async def async_setup_entry(
     for iface in coordinator.data.interfaces:
         if monitored is not None and iface["name"] not in monitored:
             continue
-        entities.append(
-            RouterOSInterfaceRunningSensor(coordinator, iface["name"])
-        )
+        entities.append(RouterOSInterfaceRunningSensor(coordinator, iface["name"]))
 
     async_add_entities(entities)
 
@@ -65,9 +63,7 @@ class RouterOSInterfaceRunningSensor(RouterOSEntity, BinarySensorEntity):
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
-    def __init__(
-        self, coordinator: RouterOSCoordinator, interface_name: str
-    ) -> None:
+    def __init__(self, coordinator: RouterOSCoordinator, interface_name: str) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._interface_name = interface_name

@@ -92,9 +92,7 @@ class RouterOSOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage the options."""
         coordinator = self.hass.data[DOMAIN][self.config_entry.entry_id]
-        all_interfaces = [
-            iface["name"] for iface in coordinator.data.interfaces
-        ]
+        all_interfaces = [iface["name"] for iface in coordinator.data.interfaces]
 
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -111,9 +109,7 @@ class RouterOSOptionsFlow(OptionsFlow):
                         CONF_MONITORED_INTERFACES,
                         default=current,
                     ): vol.All(
-                        cv.multi_select(
-                            {name: name for name in all_interfaces}
-                        ),
+                        cv.multi_select({name: name for name in all_interfaces}),
                     ),
                 }
             ),
