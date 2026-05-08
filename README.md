@@ -18,7 +18,7 @@ A Home Assistant custom integration that polls MikroTik RouterOS routers for LTE
 1. Open HACS in Home Assistant
 2. Click "Integrations"
 3. Click the three dots menu → "Custom repositories"
-4. Add `https://github.com/madworx/homeassistant-routeros` with category "Integration"
+4. Add `https://github.com/madworx/homeassistant-routeros-lte` with category "Integration"
 5. Install "MikroTik RouterOS LTE"
 6. Restart Home Assistant
 
@@ -32,6 +32,16 @@ A Home Assistant custom integration that polls MikroTik RouterOS routers for LTE
 1. Go to Settings → Devices & Services → Add Integration
 2. Search for "MikroTik RouterOS LTE"
 3. Enter your router's IP, port (default 8728), username, and password
+
+### Selecting Interfaces
+
+By default, all interfaces discovered on the router are monitored. To choose which interfaces create entities:
+
+1. Go to Settings → Devices & Services
+2. Find the "MikroTik RouterOS LTE" integration and click **Configure**
+3. Select which interfaces to monitor — unselected interfaces will not create entities
+
+Changing this setting reloads the integration automatically.
 
 ### RouterOS API Setup
 
@@ -52,6 +62,9 @@ Ensure the API service is enabled on your MikroTik router:
 | SINR | dB | Signal to Interference+Noise Ratio |
 | Band | - | Current LTE band |
 | Cell ID | - | Current cell identifier |
+| LAC | - | Location Area Code |
+| MCC | - | Mobile Country Code |
+| MNC | - | Mobile Network Code |
 
 ### System Sensors
 | Sensor | Unit | Description |
@@ -61,13 +74,19 @@ Ensure the API service is enabled on your MikroTik router:
 | Uptime | - | System uptime duration |
 | Disk Usage | % | Disk utilization |
 
-### Interface Sensors (per interface)
+### Interface Sensors (per monitored interface)
 | Sensor | Unit | Description |
 |--------|------|-------------|
 | TX Bytes | B | Total transmitted bytes |
 | RX Bytes | B | Total received bytes |
 | TX Packets | - | Total transmitted packets |
 | RX Packets | - | Total received packets |
+
+### Binary Sensors
+| Sensor | Description |
+|--------|-------------|
+| LTE Connected | Whether the LTE modem is connected |
+| {interface} Running | Whether a monitored interface is running |
 
 ## Requirements
 
