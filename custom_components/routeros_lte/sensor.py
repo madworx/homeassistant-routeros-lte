@@ -171,8 +171,20 @@ async def async_setup_entry(
     for iface in coordinator.data.interfaces:
         iface_name = iface["name"]
         for stat_key, stat_name, unit, dev_class, suggested_unit in (
-            ("tx-byte", "TX Bytes", UnitOfInformation.BYTES, SensorDeviceClass.DATA_SIZE, UnitOfInformation.GIGABYTES),
-            ("rx-byte", "RX Bytes", UnitOfInformation.BYTES, SensorDeviceClass.DATA_SIZE, UnitOfInformation.GIGABYTES),
+            (
+                "tx-byte",
+                "TX Bytes",
+                UnitOfInformation.BYTES,
+                SensorDeviceClass.DATA_SIZE,
+                UnitOfInformation.GIGABYTES,
+            ),
+            (
+                "rx-byte",
+                "RX Bytes",
+                UnitOfInformation.BYTES,
+                SensorDeviceClass.DATA_SIZE,
+                UnitOfInformation.GIGABYTES,
+            ),
             ("tx-packet", "TX Packets", None, None, None),
             ("rx-packet", "RX Packets", None, None, None),
         ):
@@ -186,9 +198,7 @@ async def async_setup_entry(
                 data_path="interface",
                 data_key=stat_key,
             )
-            entities.append(
-                RouterOSInterfaceSensor(coordinator, desc, iface_name)
-            )
+            entities.append(RouterOSInterfaceSensor(coordinator, desc, iface_name))
 
     async_add_entities(entities)
 
