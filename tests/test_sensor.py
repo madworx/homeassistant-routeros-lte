@@ -1,6 +1,6 @@
 """Tests for RouterOS LTE sensors."""
 
-from custom_components.routeros_lte.coordinator import RouterOSData
+from custom_components.routeros_lte.coordinator import RouterOSCoordinator, RouterOSData
 
 
 def test_memory_usage_calculation():
@@ -85,3 +85,49 @@ def test_interface_data():
     assert data.interfaces[0]["name"] == "ether1"
     assert data.interfaces[0]["running"] is True
     assert data.interfaces[0]["tx-byte"] == 1_000_000
+
+
+def test_normalize_lte_data_current_cellid():
+    """Test that current-cellid is mapped to cell-id."""
+    lte = {"current-cellid": 2514442, "rssi": -65}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["cell-id"] == 2514442
+
+
+def test_normalize_lte_data_cell_id_not_overwritten():
+    """Test that existing cell-id is not overwritten by current-cellid."""
+    lte = {"cell-id": "12345", "current-cellid": 9999}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["cell-id"] == "12345"
+
+
+def test_normalize_lte_data_mcc_mnc_from_operator_5digit():
+    """Test MCC/MNC parsing from 5-digit current-operator."""
+    lte = {"current-operator": 24701}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "247"
+    assert lte["mnc"] == "01"
+
+
+def test_normalize_lte_data_mcc_mnc_from_operator_6digit():
+    """Test MCC/MNC parsing from 6-digit current-operator."""
+    lte = {"current-operator": 310260}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "310"
+    assert lte["mnc"] == "260"
+
+
+def test_normalize_lte_data_mcc_mnc_not_overwritten():
+    """Test that existing mcc/mnc are not overwritten."""
+    lte = {"current-operator": 24701, "mcc": "244", "mnc": "05"}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "244"
+    assert lte["mnc"] == "05"
+
+
+def test_normalize_lte_data_text_operator_ignored():
+    """Test that non-numeric current-operator is ignored for MCC/MNC."""
+    lte = {"current-operator": "LMT"}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert "mcc" not in lte
+    assert "mnc" not in lte

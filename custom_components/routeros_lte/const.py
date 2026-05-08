@@ -23,9 +23,11 @@ LTE_KEYS = [
     "sinr",
     "band",
     "cell-id",
+    "current-cellid",
     "lac",
     "mcc",
     "mnc",
+    "current-operator",
     "connection-status",
 ]
 
