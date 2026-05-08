@@ -21,7 +21,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import CONF_MONITORED_INTERFACES, DOMAIN
 from .coordinator import RouterOSCoordinator
 from .entity import RouterOSEntity
 
@@ -157,6 +157,8 @@ async def async_setup_entry(
     """Set up RouterOS LTE sensors from a config entry."""
     coordinator: RouterOSCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    monitored = entry.options.get(CONF_MONITORED_INTERFACES)
+
     entities: list[SensorEntity] = []
 
     # LTE sensors
@@ -170,6 +172,8 @@ async def async_setup_entry(
     # Interface sensors (dynamic based on discovered interfaces)
     for iface in coordinator.data.interfaces:
         iface_name = iface["name"]
+        if monitored is not None and iface_name not in monitored:
+            continue
         for stat_key, stat_name, unit, dev_class, suggested_unit in (
             (
                 "tx-byte",

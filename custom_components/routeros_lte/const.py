@@ -11,6 +11,7 @@ CONF_HOST = "host"
 CONF_PORT = "port"
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
+CONF_MONITORED_INTERFACES = "monitored_interfaces"
 
 PLATFORMS = ["sensor", "binary_sensor"]
 

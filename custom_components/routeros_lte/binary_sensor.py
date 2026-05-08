@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import CONF_MONITORED_INTERFACES, DOMAIN
 from .coordinator import RouterOSCoordinator
 from .entity import RouterOSEntity
 
@@ -23,6 +23,8 @@ async def async_setup_entry(
     """Set up RouterOS LTE binary sensors from a config entry."""
     coordinator: RouterOSCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    monitored = entry.options.get(CONF_MONITORED_INTERFACES)
+
     entities: list[BinarySensorEntity] = []
 
     # LTE connection status
@@ -31,6 +33,8 @@ async def async_setup_entry(
 
     # Interface running state
     for iface in coordinator.data.interfaces:
+        if monitored is not None and iface["name"] not in monitored:
+            continue
         entities.append(
             RouterOSInterfaceRunningSensor(coordinator, iface["name"])
         )

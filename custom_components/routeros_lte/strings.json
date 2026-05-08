@@ -20,5 +20,16 @@
     "abort": {
       "already_configured": "This router is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Interface Selection",
+        "description": "Select which interfaces to monitor. Unselected interfaces will not create entities.",
+        "data": {
+          "monitored_interfaces": "Monitored interfaces"
+        }
+      }
+    }
   }
 }

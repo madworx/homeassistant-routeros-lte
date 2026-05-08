@@ -2,10 +2,17 @@
 
 import librouteros
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_HOST,
+    CONF_MONITORED_INTERFACES,
     CONF_PASSWORD,
     CONF_PORT,
     CONF_USERNAME,
@@ -18,6 +25,11 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for RouterOS LTE."""
 
     VERSION = 1
+
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Get the options flow for this handler."""
+        return RouterOSOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, str] | None = None
@@ -70,3 +82,39 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
 
         api = await self.hass.async_add_executor_job(_connect)
         api.close()
+
+
+class RouterOSOptionsFlow(OptionsFlow):
+    """Handle options for RouterOS LTE."""
+
+    async def async_step_init(
+        self, user_input: dict[str, list[str]] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        coordinator = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        all_interfaces = [
+            iface["name"] for iface in coordinator.data.interfaces
+        ]
+
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self.config_entry.options.get(
+            CONF_MONITORED_INTERFACES, all_interfaces
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_MONITORED_INTERFACES,
+                        default=current,
+                    ): vol.All(
+                        cv.multi_select(
+                            {name: name for name in all_interfaces}
+                        ),
+                    ),
+                }
+            ),
+        )
