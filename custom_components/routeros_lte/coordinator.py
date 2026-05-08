@@ -92,7 +92,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
             if lte_interfaces:
                 lte_name = lte_interfaces[0].get("name", "lte1")
                 lte_monitor = list(
-                    api("/interface/lte/monitor", **{"=once": "", "=numbers": lte_name})
+                    api("/interface/lte/monitor", once="", numbers=lte_name)
                 )
                 if lte_monitor:
                     data.lte = {

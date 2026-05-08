@@ -4,6 +4,22 @@
         "ruff": true,
         "git add": true,
         "git commit": true,
-        "git push": true
+        "git push": true,
+        "/^gh run list -R madworx/homeassistant-routeros-lte -L 1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^gh run watch -R madworx/homeassistant-routeros-lte \\$\\(gh run list -R madworx/homeassistant-routeros-lte -L 1 --json databaseId -q '\\.\\[0\\]\\.databaseId'\\) 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^gh run list -R madworx/homeassistant-routeros-lte -L 1 2>&1 \\| cat$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^gh run view -R madworx/homeassistant-routeros-lte \\$\\(gh run list -R madworx/homeassistant-routeros-lte -L 1 --json databaseId -q '\\.\\[0\\]\\.databaseId'\\) --exit-status 2>&1 \\| cat$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
