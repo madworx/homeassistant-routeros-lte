@@ -53,11 +53,14 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _test_connection(self, user_input: dict[str, str]) -> None:
         """Test if we can connect to the RouterOS device."""
-        api = await self.hass.async_add_executor_job(
-            librouteros.connect,
-            user_input[CONF_HOST],
-            user_input[CONF_USERNAME],
-            user_input[CONF_PASSWORD],
-            user_input[CONF_PORT],
-        )
+
+        def _connect() -> librouteros.api.Api:
+            return librouteros.connect(
+                host=user_input[CONF_HOST],
+                username=user_input[CONF_USERNAME],
+                password=user_input[CONF_PASSWORD],
+                port=user_input[CONF_PORT],
+            )
+
+        api = await self.hass.async_add_executor_job(_connect)
         api.close()
