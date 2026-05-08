@@ -1,8 +1,12 @@
 """Fixtures for RouterOS LTE tests."""
 
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Remove editable install path hooks that confuse HA's integration loader
+sys.path[:] = [p for p in sys.path if "__path_hook__" not in p]
 
 from custom_components.routeros_lte.coordinator import RouterOSData
 

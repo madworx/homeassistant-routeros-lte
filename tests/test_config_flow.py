@@ -18,7 +18,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     yield
 
 
-async def test_form_user(hass: HomeAssistant, mock_connect) -> None:
+async def test_form_user(hass: HomeAssistant, mock_connect, mock_routeros_data) -> None:
     """Test the user config flow with valid input."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
@@ -28,6 +28,7 @@ async def test_form_user(hass: HomeAssistant, mock_connect) -> None:
 
     with patch(
         "custom_components.routeros_lte.coordinator.RouterOSCoordinator._fetch_data",
+        return_value=mock_routeros_data,
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],

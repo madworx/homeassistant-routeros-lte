@@ -90,11 +90,11 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
 
         try:
             # Fetch LTE monitor data
-            lte_interfaces = list(api(cmd="/interface/lte/print"))
+            lte_interfaces = list(api("/interface/lte/print"))
             if lte_interfaces:
                 lte_name = lte_interfaces[0].get("name", "lte1")
                 lte_monitor = list(
-                    api(cmd="/interface/lte/monitor", **{"=once": "", "=numbers": lte_name})
+                    api("/interface/lte/monitor", **{"=once": "", "=numbers": lte_name})
                 )
                 if lte_monitor:
                     data.lte = {
@@ -107,7 +107,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
 
         try:
             # Fetch system resources
-            resources = list(api(cmd="/system/resource/print"))
+            resources = list(api("/system/resource/print"))
             if resources:
                 data.system = {
                     k: resources[0].get(k) for k in SYSTEM_KEYS if k in resources[0]
@@ -117,7 +117,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
 
         try:
             # Fetch interface statistics
-            interfaces = list(api(cmd="/interface/print"))
+            interfaces = list(api("/interface/print"))
             data.interfaces = [
                 {
                     "name": iface.get("name", ""),
