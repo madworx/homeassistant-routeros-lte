@@ -54,10 +54,12 @@ class RouterOSLTEConnectionSensor(RouterOSEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if LTE is connected."""
-        status = self.coordinator.data.lte.get(
-            "connection-status", self.coordinator.data.lte.get("status", "")
+        status = self.coordinator.data.lte.get("connection-status") or (
+            self.coordinator.data.lte.get("status")
         )
-        return status.lower() == "connected" if status else None
+        if not status:
+            return None
+        return status.lower() in ("connected", "attached")
 
 
 class RouterOSInterfaceRunningSensor(RouterOSEntity, BinarySensorEntity):
