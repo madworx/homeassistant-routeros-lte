@@ -17,6 +17,7 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfInformation,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -136,6 +137,7 @@ SYSTEM_SENSORS: tuple[RouterOSSensorDescription, ...] = (
         translation_key="uptime",
         name="Uptime",
         device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
         data_path="system",
         data_key="uptime",
     ),
@@ -234,10 +236,38 @@ class RouterOSSensor(RouterOSEntity, SensorEntity):
             return self._get_system_value()
         return None
 
+    @staticmethod
+    def _parse_uptime(uptime_str: str) -> int:
+        """Parse RouterOS uptime string (e.g. '3w2d12h05m30s') to seconds."""
+        import re
+
+        total = 0
+        for value, unit in re.findall(r"(\d+)([wdhms])", uptime_str):
+            n = int(value)
+            if unit == "w":
+                total += n * 604800
+            elif unit == "d":
+                total += n * 86400
+            elif unit == "h":
+                total += n * 3600
+            elif unit == "m":
+                total += n * 60
+            elif unit == "s":
+                total += n
+        return total
+
     def _get_system_value(self) -> Any | None:
         """Calculate system sensor values."""
         system = self.coordinator.data.system
         key = self.entity_description.data_key
+
+        if key == "uptime":
+            raw = system.get("uptime")
+            if raw is None:
+                return None
+            if isinstance(raw, str):
+                return self._parse_uptime(raw)
+            return raw
 
         if key == "memory-usage":
             total = system.get("total-memory", 0)

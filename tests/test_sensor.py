@@ -1,6 +1,7 @@
 """Tests for RouterOS LTE sensors."""
 
 from custom_components.routeros_lte.coordinator import RouterOSCoordinator, RouterOSData
+from custom_components.routeros_lte.sensor import RouterOSSensor
 
 
 def test_memory_usage_calculation():
@@ -169,3 +170,20 @@ def test_normalize_lte_data_mcc_mnc_not_from_imsi_when_operator_numeric():
     RouterOSCoordinator._normalize_lte_data(lte)
     assert lte["mcc"] == "240"
     assert lte["mnc"] == "08"
+
+
+def test_parse_uptime_days():
+    """Test parsing uptime string with days."""
+    assert RouterOSSensor._parse_uptime("1d") == 86400
+
+
+def test_parse_uptime_complex():
+    """Test parsing uptime string with weeks, days, hours, minutes, seconds."""
+    assert RouterOSSensor._parse_uptime("3d12h05m") == 3 * 86400 + 12 * 3600 + 5 * 60
+
+
+def test_parse_uptime_full():
+    """Test parsing uptime string with all components."""
+    assert RouterOSSensor._parse_uptime("1w2d3h4m5s") == (
+        604800 + 2 * 86400 + 3 * 3600 + 4 * 60 + 5
+    )
