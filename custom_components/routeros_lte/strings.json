@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "MikroTik RouterOS Connection",
+        "description": "Enter the connection details for your MikroTik router. Ensure the API service is enabled on the router.",
+        "data": {
+          "host": "Host",
+          "port": "API Port",
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the router. Check the host and port.",
+      "invalid_auth": "Invalid authentication. Check the username and password.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This router is already configured."
+    }
+  }
+}

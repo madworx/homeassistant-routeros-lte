@@ -1,0 +1,12 @@
+{
+  "domain": "routeros_lte",
+  "name": "MikroTik RouterOS LTE",
+  "version": "1.0.0",
+  "codeowners": ["@madworx"],
+  "documentation": "https://github.com/madworx/homeassistant-routeros",
+  "issue_tracker": "https://github.com/madworx/homeassistant-routeros/issues",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "requirements": ["librouteros>=4.0.0"],
+  "config_flow": true
+}

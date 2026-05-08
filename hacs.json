@@ -1,0 +1,5 @@
+{
+  "name": "MikroTik RouterOS LTE",
+  "homeassistant": "2024.1.0",
+  "render_readme": true
+}
