@@ -131,3 +131,41 @@ def test_normalize_lte_data_text_operator_ignored():
     RouterOSCoordinator._normalize_lte_data(lte)
     assert "mcc" not in lte
     assert "mnc" not in lte
+
+
+def test_normalize_lte_data_band_from_primary_band():
+    """Test band extraction from primary-band field."""
+    lte = {"primary-band": "B3@10Mhz earfcn: 1606 phy-cellid: 0"}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["band"] == "B3"
+
+
+def test_normalize_lte_data_band_not_overwritten():
+    """Test that existing band is not overwritten by primary-band."""
+    lte = {"band": "B7", "primary-band": "B3@10Mhz earfcn: 1606 phy-cellid: 0"}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["band"] == "B7"
+
+
+def test_normalize_lte_data_mcc_mnc_from_imsi():
+    """Test MCC/MNC parsed from IMSI when operator is text."""
+    lte = {"current-operator": "Telenor SE", "imsi": 240084720207125}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "240"
+    assert lte["mnc"] == "08"
+
+
+def test_normalize_lte_data_mcc_mnc_from_imsi_3digit_mnc():
+    """Test 3-digit MNC parsed from IMSI for North American operators."""
+    lte = {"current-operator": "T-Mobile", "imsi": 310260123456789}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "310"
+    assert lte["mnc"] == "260"
+
+
+def test_normalize_lte_data_mcc_mnc_not_from_imsi_when_operator_numeric():
+    """Test IMSI fallback is not used when numeric operator provides MCC/MNC."""
+    lte = {"current-operator": 24008, "imsi": 240084720207125}
+    RouterOSCoordinator._normalize_lte_data(lte)
+    assert lte["mcc"] == "240"
+    assert lte["mnc"] == "08"
