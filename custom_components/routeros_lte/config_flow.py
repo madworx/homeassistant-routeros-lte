@@ -2,10 +2,16 @@
 
 import librouteros
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 
-from .const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME, DEFAULT_PORT, DOMAIN
+from .const import (
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    DEFAULT_PORT,
+    DOMAIN,
+)
 
 
 class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -26,7 +32,7 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except (ConnectionRefusedError, OSError, TimeoutError):
                 errors["base"] = "cannot_connect"
-            except Exception:  # noqa: BLE001
+            except Exception:
                 errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(

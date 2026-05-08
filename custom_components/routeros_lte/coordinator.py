@@ -1,11 +1,11 @@
 """DataUpdateCoordinator for MikroTik RouterOS LTE."""
 
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 import librouteros
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -63,10 +63,8 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
     def disconnect(self) -> None:
         """Disconnect from RouterOS."""
         if self._api:
-            try:
+            with contextlib.suppress(Exception):
                 self._api.close()
-            except Exception:  # noqa: BLE001
-                pass
             self._api = None
 
     def _ensure_connected(self) -> librouteros.api.Api:

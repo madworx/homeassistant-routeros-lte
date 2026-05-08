@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import librouteros.exceptions
 import pytest
-
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType

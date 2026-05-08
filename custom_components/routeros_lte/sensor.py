@@ -170,16 +170,18 @@ async def async_setup_entry(
     # Interface sensors (dynamic based on discovered interfaces)
     for iface in coordinator.data.interfaces:
         iface_name = iface["name"]
-        for stat_key, stat_name, unit in (
-            ("tx-byte", "TX Bytes", UnitOfInformation.BYTES),
-            ("rx-byte", "RX Bytes", UnitOfInformation.BYTES),
-            ("tx-packet", "TX Packets", None),
-            ("rx-packet", "RX Packets", None),
+        for stat_key, stat_name, unit, dev_class, suggested_unit in (
+            ("tx-byte", "TX Bytes", UnitOfInformation.BYTES, SensorDeviceClass.DATA_SIZE, UnitOfInformation.GIGABYTES),
+            ("rx-byte", "RX Bytes", UnitOfInformation.BYTES, SensorDeviceClass.DATA_SIZE, UnitOfInformation.GIGABYTES),
+            ("tx-packet", "TX Packets", None, None, None),
+            ("rx-packet", "RX Packets", None, None, None),
         ):
             desc = RouterOSSensorDescription(
                 key=f"iface_{iface_name}_{stat_key}",
                 name=f"{iface_name} {stat_name}",
                 native_unit_of_measurement=unit,
+                device_class=dev_class,
+                suggested_unit_of_measurement=suggested_unit,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 data_path="interface",
                 data_key=stat_key,

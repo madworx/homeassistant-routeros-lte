@@ -1,9 +1,7 @@
 """Tests for RouterOS LTE sensors."""
 
-import pytest
 
 from custom_components.routeros_lte.coordinator import RouterOSData
-from custom_components.routeros_lte.sensor import RouterOSSensor, RouterOSSensorDescription
 
 
 def test_memory_usage_calculation():
