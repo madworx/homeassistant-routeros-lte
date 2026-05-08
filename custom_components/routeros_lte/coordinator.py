@@ -111,9 +111,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
                 lte["mnc"] = imsi_str[3 : 3 + mnc_len]
 
     @staticmethod
-    def _fetch_tac_via_at(
-        api: librouteros.api.Api, lte_id: str
-    ) -> str | None:
+    def _fetch_tac_via_at(api: librouteros.api.Api, lte_id: str) -> str | None:
         """Fetch TAC (Tracking Area Code) via AT+QENG command."""
         try:
             result = list(

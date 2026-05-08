@@ -94,9 +94,7 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_MONITORED_INTERFACES,
                         default=self._interfaces,
                     ): vol.All(
-                        cv.multi_select(
-                            {name: name for name in self._interfaces}
-                        ),
+                        cv.multi_select({name: name for name in self._interfaces}),
                     ),
                 }
             ),
@@ -114,7 +112,9 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             try:
                 interfaces = list(api("/interface/print"))
-                return [iface.get("name", "") for iface in interfaces if iface.get("name")]
+                return [
+                    iface.get("name", "") for iface in interfaces if iface.get("name")
+                ]
             finally:
                 api.close()
 
