@@ -17,10 +17,10 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfInformation,
-    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_MONITORED_INTERFACES, DOMAIN
 from .coordinator import RouterOSCoordinator
@@ -136,8 +136,7 @@ SYSTEM_SENSORS: tuple[RouterOSSensorDescription, ...] = (
         key="uptime",
         translation_key="uptime",
         name="Uptime",
-        device_class=SensorDeviceClass.DURATION,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
+        device_class=SensorDeviceClass.TIMESTAMP,
         data_path="system",
         data_key="uptime",
     ),
@@ -265,9 +264,15 @@ class RouterOSSensor(RouterOSEntity, SensorEntity):
             raw = system.get("uptime")
             if raw is None:
                 return None
-            if isinstance(raw, str):
-                return self._parse_uptime(raw)
-            return raw
+            from datetime import timedelta
+
+            if isinstance(raw, timedelta):
+                seconds = int(raw.total_seconds())
+            elif isinstance(raw, str):
+                seconds = self._parse_uptime(raw)
+            else:
+                seconds = int(raw)
+            return dt_util.utcnow() - timedelta(seconds=seconds)
 
         if key == "memory-usage":
             total = system.get("total-memory", 0)

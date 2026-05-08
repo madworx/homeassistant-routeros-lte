@@ -31,6 +31,7 @@ LTE_KEYS = [
     "current-operator",
     "imsi",
     "connection-status",
+    "status",
 ]
 
 # System resource keys
