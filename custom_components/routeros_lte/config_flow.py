@@ -26,6 +26,11 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._user_input: dict[str, str] = {}
+        self._interfaces: list[str] = []
+
     @staticmethod
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Get the options flow for this handler."""
@@ -39,7 +44,7 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                await self._test_connection(user_input)
+                interfaces = await self._test_connection(user_input)
             except librouteros.exceptions.TrapError:
                 errors["base"] = "invalid_auth"
             except (ConnectionRefusedError, OSError, TimeoutError):
@@ -51,10 +56,9 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
                     f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}"
                 )
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=f"RouterOS ({user_input[CONF_HOST]})",
-                    data=user_input,
-                )
+                self._user_input = user_input
+                self._interfaces = interfaces
+                return await self.async_step_select_interfaces()
 
         return self.async_show_form(
             step_id="user",
@@ -69,19 +73,52 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _test_connection(self, user_input: dict[str, str]) -> None:
-        """Test if we can connect to the RouterOS device."""
+    async def async_step_select_interfaces(
+        self, user_input: dict[str, list[str]] | None = None
+    ) -> ConfigFlowResult:
+        """Handle interface selection step."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=f"RouterOS ({self._user_input[CONF_HOST]})",
+                data=self._user_input,
+                options={
+                    CONF_MONITORED_INTERFACES: user_input[CONF_MONITORED_INTERFACES]
+                },
+            )
 
-        def _connect() -> librouteros.api.Api:
-            return librouteros.connect(
+        return self.async_show_form(
+            step_id="select_interfaces",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_MONITORED_INTERFACES,
+                        default=self._interfaces,
+                    ): vol.All(
+                        cv.multi_select(
+                            {name: name for name in self._interfaces}
+                        ),
+                    ),
+                }
+            ),
+        )
+
+    async def _test_connection(self, user_input: dict[str, str]) -> list[str]:
+        """Test connection and return list of interface names."""
+
+        def _connect() -> list[str]:
+            api = librouteros.connect(
                 host=user_input[CONF_HOST],
                 username=user_input[CONF_USERNAME],
                 password=user_input[CONF_PASSWORD],
                 port=user_input[CONF_PORT],
             )
+            try:
+                interfaces = list(api("/interface/print"))
+                return [iface.get("name", "") for iface in interfaces if iface.get("name")]
+            finally:
+                api.close()
 
-        api = await self.hass.async_add_executor_job(_connect)
-        api.close()
+        return await self.hass.async_add_executor_job(_connect)
 
 
 class RouterOSOptionsFlow(OptionsFlow):

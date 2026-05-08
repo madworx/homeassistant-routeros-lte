@@ -22,12 +22,14 @@ LTE_KEYS = [
     "rsrq",
     "sinr",
     "band",
+    "primary-band",
     "cell-id",
     "current-cellid",
     "lac",
     "mcc",
     "mnc",
     "current-operator",
+    "imsi",
     "connection-status",
 ]
 

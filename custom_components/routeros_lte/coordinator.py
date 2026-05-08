@@ -2,6 +2,7 @@
 
 import contextlib
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -80,6 +81,13 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
         if "cell-id" not in lte and "current-cellid" in lte:
             lte["cell-id"] = lte["current-cellid"]
 
+        # Parse band from primary-band if band not already present
+        # e.g. "B3@10Mhz earfcn: 1606 phy-cellid: 0" -> "B3"
+        if "band" not in lte and "primary-band" in lte:
+            match = re.match(r"(B\d+)", str(lte["primary-band"]))
+            if match:
+                lte["band"] = match.group(1)
+
         # Parse MCC/MNC from numeric current-operator if not already present
         operator = lte.get("current-operator")
         if operator is not None and "mcc" not in lte and "mnc" not in lte:
@@ -90,6 +98,47 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
                     lte["mnc"] = op_str[3:]
             except (ValueError, TypeError):
                 pass
+
+        # Fallback: parse MCC/MNC from IMSI (first 3 digits = MCC, next 2-3 = MNC)
+        if "mcc" not in lte and "imsi" in lte:
+            imsi_str = str(lte["imsi"])
+            if len(imsi_str) >= 5:
+                lte["mcc"] = imsi_str[:3]
+                # MNC is 2 digits for most countries, 3 for some (e.g. North America)
+                # Use 2-digit MNC by default; 3-digit for known 3-digit MCC prefixes
+                three_digit_mnc_mccs = {"302", "310", "311", "312", "313", "316"}
+                mnc_len = 3 if imsi_str[:3] in three_digit_mnc_mccs else 2
+                lte["mnc"] = imsi_str[3 : 3 + mnc_len]
+
+    @staticmethod
+    def _fetch_tac_via_at(
+        api: librouteros.api.Api, lte_id: str
+    ) -> str | None:
+        """Fetch TAC (Tracking Area Code) via AT+QENG command."""
+        try:
+            result = list(
+                api(
+                    "/interface/lte/at-chat",
+                    input='AT+QENG="servingcell"',
+                    **{".id": lte_id},
+                )
+            )
+            if result:
+                output = result[0].get("output", "")
+                # Parse +QENG: "servingcell","state","LTE","FDD",MCC,MNC,cellID,
+                #   PCID,earfcn,band,UL_BW,DL_BW,TAC,...
+                match = re.search(
+                    r'\+QENG:\s*"servingcell",'
+                    r'"[^"]*","LTE","[^"]*",'
+                    r"(\d+),(\d+),[0-9A-Fa-f]+,\d+,\d+,\d+,\d+,\d+,"
+                    r"([0-9A-Fa-f]+)",
+                    output,
+                )
+                if match:
+                    return str(int(match.group(3), 16))
+        except Exception:
+            _LOGGER.debug("AT command for TAC not available", exc_info=True)
+        return None
 
     def _fetch_data(self) -> RouterOSData:
         """Fetch data from the RouterOS device (runs in executor)."""
@@ -109,6 +158,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
             lte_interfaces = list(api("/interface/lte/print"))
             if lte_interfaces:
                 lte_name = lte_interfaces[0].get("name", "lte1")
+                lte_id = lte_interfaces[0].get(".id")
                 lte_monitor = list(
                     api("/interface/lte/monitor", once="", numbers=lte_name)
                 )
@@ -119,6 +169,12 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
                         if k in lte_monitor[0]
                     }
                     self._normalize_lte_data(data.lte)
+
+                # Fetch TAC (LAC) via AT command if not already available
+                if "lac" not in data.lte and lte_id is not None:
+                    tac = self._fetch_tac_via_at(api, lte_id)
+                    if tac is not None:
+                        data.lte["lac"] = tac
         except librouteros.exceptions.TrapError as err:
             _LOGGER.debug("LTE data not available: %s", err)
 

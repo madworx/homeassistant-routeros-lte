@@ -65,6 +65,16 @@ def mock_api():
     """Return a mock librouteros API."""
     api = MagicMock()
     api.close = MagicMock()
+
+    def api_call(path, **kwargs):
+        if path == "/interface/print":
+            return [
+                {"name": "ether1", "type": "ether", "running": True},
+                {"name": "lte1", "type": "lte", "running": True},
+            ]
+        return []
+
+    api.side_effect = api_call
     return api
 
 

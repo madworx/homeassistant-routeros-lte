@@ -10,6 +10,13 @@
           "username": "Username",
           "password": "Password"
         }
+      },
+      "select_interfaces": {
+        "title": "Interface Selection",
+        "description": "Select which interfaces to monitor. You can change this later in the integration options.",
+        "data": {
+          "monitored_interfaces": "Monitored interfaces"
+        }
       }
     },
     "error": {

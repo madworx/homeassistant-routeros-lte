@@ -25,18 +25,26 @@ async def test_form_user(hass: HomeAssistant, mock_connect, mock_routeros_data) 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "user"
 
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            "host": "192.168.88.1",
+            "port": 8728,
+            "username": "admin",
+            "password": "secret",
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "select_interfaces"
+
     with patch(
         "custom_components.routeros_lte.coordinator.RouterOSCoordinator._fetch_data",
         return_value=mock_routeros_data,
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {
-                "host": "192.168.88.1",
-                "port": 8728,
-                "username": "admin",
-                "password": "secret",
-            },
+            {CONF_MONITORED_INTERFACES: ["ether1", "lte1"]},
         )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -47,6 +55,7 @@ async def test_form_user(hass: HomeAssistant, mock_connect, mock_routeros_data) 
         "username": "admin",
         "password": "secret",
     }
+    assert result["options"] == {CONF_MONITORED_INTERFACES: ["ether1", "lte1"]}
 
 
 async def test_form_cannot_connect(hass: HomeAssistant) -> None:
@@ -105,18 +114,22 @@ async def test_options_flow_shows_interfaces(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            "host": "192.168.88.1",
+            "port": 8728,
+            "username": "admin",
+            "password": "secret",
+        },
+    )
     with patch(
         "custom_components.routeros_lte.coordinator.RouterOSCoordinator._fetch_data",
         return_value=mock_routeros_data,
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {
-                "host": "192.168.88.1",
-                "port": 8728,
-                "username": "admin",
-                "password": "secret",
-            },
+            {CONF_MONITORED_INTERFACES: ["ether1", "lte1"]},
         )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -135,18 +148,22 @@ async def test_options_flow_select_interfaces(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            "host": "192.168.88.1",
+            "port": 8728,
+            "username": "admin",
+            "password": "secret",
+        },
+    )
     with patch(
         "custom_components.routeros_lte.coordinator.RouterOSCoordinator._fetch_data",
         return_value=mock_routeros_data,
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {
-                "host": "192.168.88.1",
-                "port": 8728,
-                "username": "admin",
-                "password": "secret",
-            },
+            {CONF_MONITORED_INTERFACES: ["ether1", "lte1"]},
         )
 
     entry = result["result"]
