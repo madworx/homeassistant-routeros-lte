@@ -49,3 +49,15 @@ def test_lte_connected_prefers_connection_status():
     """Test connection-status is preferred over status."""
     sensor = _make_sensor({"connection-status": "connected", "status": "searching"})
     assert sensor.is_on is True
+
+
+def test_lte_connected_status_with_qualifier():
+    """Test LTE sensor handles 'connected (home)' and similar suffixed statuses."""
+    sensor = _make_sensor({"status": "connected (home)"})
+    assert sensor.is_on is True
+
+    sensor = _make_sensor({"status": "connected (roaming)"})
+    assert sensor.is_on is True
+
+    sensor = _make_sensor({"connection-status": "attached (home)"})
+    assert sensor.is_on is True

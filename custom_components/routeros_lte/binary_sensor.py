@@ -59,7 +59,10 @@ class RouterOSLTEConnectionSensor(RouterOSEntity, BinarySensorEntity):
         )
         if not status:
             return None
-        return status.lower() in ("connected", "attached")
+        normalized = status.lower()
+        if "disconnect" in normalized:
+            return False
+        return "connected" in normalized or "attached" in normalized
 
 
 class RouterOSInterfaceRunningSensor(RouterOSEntity, BinarySensorEntity):
