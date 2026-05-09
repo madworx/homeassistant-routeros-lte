@@ -14,7 +14,7 @@ from custom_components.routeros_lte.const import CONF_MONITORED_INTERFACES, DOMA
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations for testing."""
-    yield
+    return
 
 
 async def test_form_user(hass: HomeAssistant, mock_connect, mock_routeros_data) -> None:

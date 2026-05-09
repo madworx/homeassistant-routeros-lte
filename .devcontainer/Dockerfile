@@ -13,6 +13,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get update && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Grype for vulnerability scanning
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sudo sh -s -- -b /usr/local/bin
+
 # Pre-install Home Assistant Core for development
 RUN pip install --no-cache-dir homeassistant
 

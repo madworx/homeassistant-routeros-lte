@@ -1,6 +1,8 @@
 # MikroTik RouterOS LTE Integration for Home Assistant
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
+[![CI](https://github.com/madworx/homeassistant-routeros-lte/actions/workflows/validate.yml/badge.svg)](https://github.com/madworx/homeassistant-routeros-lte/actions/workflows/validate.yml)
+[![codecov](https://codecov.io/gh/madworx/homeassistant-routeros-lte/branch/main/graph/badge.svg)](https://codecov.io/gh/madworx/homeassistant-routeros-lte)
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=madworx&repository=homeassistant-routeros-lte&category=integration)
 
 A Home Assistant custom integration that polls MikroTik RouterOS routers for LTE status, system resources, and interface statistics via the RouterOS API.
