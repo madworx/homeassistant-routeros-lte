@@ -13,6 +13,12 @@
 
 - This repo uses `github-copilot[bot]` as the local git user. Do not change it.
 
+## Git Safety
+
+- **NEVER** force-push (`git push --force`, `git push -f`, `git push --force-with-lease`).
+- **NEVER** amend commits that have already been pushed (`git commit --amend` after push).
+- To fix mistakes on a pushed branch, always create a **new commit** on the existing branch.
+
 ## Repository
 
 - Always specify `madworx/homeassistant-routeros-lte` when using `gh` commands that target a repository.
