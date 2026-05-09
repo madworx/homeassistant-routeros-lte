@@ -187,3 +187,68 @@ def test_parse_uptime_full():
     assert RouterOSSensor._parse_uptime("1w2d3h4m5s") == (
         604800 + 2 * 86400 + 3 * 3600 + 4 * 60 + 5
     )
+
+
+def test_lte_imei_extraction():
+    """Test LTE IMEI is properly extracted."""
+    data = RouterOSData(
+        lte={"imei": "860561044494441"},
+        system={},
+        interfaces=[],
+    )
+    assert data.lte["imei"] == "860561044494441"
+
+
+def test_lte_iccid_extraction():
+    """Test LTE ICCID is properly extracted."""
+    data = RouterOSData(
+        lte={"iccid": "89460851027003480376"},
+        system={},
+        interfaces=[],
+    )
+    assert data.lte["iccid"] == "89460851027003480376"
+
+
+def test_lte_operator_extraction():
+    """Test LTE operator name is properly extracted."""
+    data = RouterOSData(
+        lte={"current-operator": "Telenor SE"},
+        system={},
+        interfaces=[],
+    )
+    assert data.lte["current-operator"] == "Telenor SE"
+
+
+def test_lte_session_uptime_parsing():
+    """Test session uptime is parsed to seconds."""
+    assert RouterOSSensor._parse_uptime("1h30m") == 3600 + 30 * 60
+    assert RouterOSSensor._parse_uptime("28m4s") == 28 * 60 + 4
+
+
+def test_wifi_client_count():
+    """Test WiFi client count data."""
+    data = RouterOSData(
+        lte={},
+        system={},
+        interfaces=[],
+        wifi_client_count=5,
+    )
+    assert data.wifi_client_count == 5
+
+
+def test_routerboard_data():
+    """Test routerboard data structure."""
+    data = RouterOSData(
+        lte={},
+        system={},
+        interfaces=[],
+        routerboard={
+            "serial-number": "HHD0AAWV5ZG",
+            "model": "D53G-5HacD2HnD",
+            "current-firmware": "7.18.2",
+            "upgrade-firmware": "7.22.2",
+        },
+    )
+    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["current-firmware"] == "7.18.2"
+    assert data.routerboard["upgrade-firmware"] == "7.22.2"

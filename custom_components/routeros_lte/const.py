@@ -13,7 +13,7 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_MONITORED_INTERFACES = "monitored_interfaces"
 
-PLATFORMS = ["sensor", "binary_sensor"]
+PLATFORMS = ["sensor", "binary_sensor", "update"]
 
 # LTE monitor keys
 LTE_KEYS = [
@@ -32,6 +32,15 @@ LTE_KEYS = [
     "imsi",
     "connection-status",
     "status",
+    "imei",
+    "iccid",
+    "session-uptime",
+    "cqi",
+    "ri",
+    "ca-band",
+    "enb-id",
+    "phy-cellid",
+    "data-class",
 ]
 
 # System resource keys
@@ -44,4 +53,13 @@ SYSTEM_KEYS = [
     "total-hdd-space",
     "board-name",
     "version",
+]
+
+# Routerboard keys
+ROUTERBOARD_KEYS = [
+    "serial-number",
+    "model",
+    "current-firmware",
+    "upgrade-firmware",
+    "firmware-type",
 ]

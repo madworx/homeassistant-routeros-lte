@@ -16,6 +16,7 @@ from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
     UnitOfInformation,
 )
 from homeassistant.core import HomeAssistant
@@ -111,6 +112,74 @@ LTE_SENSORS: tuple[RouterOSSensorDescription, ...] = (
         data_path="lte",
         data_key="mnc",
     ),
+    RouterOSSensorDescription(
+        key="lte_imei",
+        translation_key="lte_imei",
+        name="LTE IMEI",
+        data_path="lte",
+        data_key="imei",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    RouterOSSensorDescription(
+        key="lte_iccid",
+        translation_key="lte_iccid",
+        name="LTE ICCID",
+        data_path="lte",
+        data_key="iccid",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    RouterOSSensorDescription(
+        key="lte_operator",
+        translation_key="lte_operator",
+        name="LTE Operator",
+        data_path="lte",
+        data_key="current-operator",
+    ),
+    RouterOSSensorDescription(
+        key="lte_session_uptime",
+        translation_key="lte_session_uptime",
+        name="LTE Session Uptime",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement="s",
+        data_path="lte",
+        data_key="session-uptime",
+    ),
+    RouterOSSensorDescription(
+        key="lte_cqi",
+        translation_key="lte_cqi",
+        name="LTE CQI",
+        state_class=SensorStateClass.MEASUREMENT,
+        data_path="lte",
+        data_key="cqi",
+    ),
+    RouterOSSensorDescription(
+        key="lte_ca_band",
+        translation_key="lte_ca_band",
+        name="LTE CA Band",
+        data_path="lte",
+        data_key="ca-band",
+    ),
+    RouterOSSensorDescription(
+        key="lte_enb_id",
+        translation_key="lte_enb_id",
+        name="LTE eNB ID",
+        data_path="lte",
+        data_key="enb-id",
+    ),
+    RouterOSSensorDescription(
+        key="lte_phy_cellid",
+        translation_key="lte_phy_cellid",
+        name="LTE Physical Cell ID",
+        data_path="lte",
+        data_key="phy-cellid",
+    ),
+    RouterOSSensorDescription(
+        key="lte_data_class",
+        translation_key="lte_data_class",
+        name="LTE Data Class",
+        data_path="lte",
+        data_key="data-class",
+    ),
 )
 
 SYSTEM_SENSORS: tuple[RouterOSSensorDescription, ...] = (
@@ -151,6 +220,16 @@ SYSTEM_SENSORS: tuple[RouterOSSensorDescription, ...] = (
     ),
 )
 
+WIFI_CLIENT_SENSOR = RouterOSSensorDescription(
+    key="wifi_client_count",
+    translation_key="wifi_client_count",
+    name="WiFi Clients",
+    state_class=SensorStateClass.MEASUREMENT,
+    data_path="wifi",
+    data_key="client_count",
+    icon="mdi:wifi",
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -171,6 +250,10 @@ async def async_setup_entry(
     # System sensors
     for description in SYSTEM_SENSORS:
         entities.append(RouterOSSensor(coordinator, description))
+
+    # WiFi client count sensor
+    if coordinator.data.wifi_client_count is not None:
+        entities.append(RouterOSSensor(coordinator, WIFI_CLIENT_SENSOR))
 
     # Interface sensors (dynamic based on discovered interfaces)
     for iface in coordinator.data.interfaces:
@@ -230,9 +313,14 @@ class RouterOSSensor(RouterOSEntity, SensorEntity):
         """Return the sensor value."""
         data = self.coordinator.data
         if self.entity_description.data_path == "lte":
-            return data.lte.get(self.entity_description.data_key)
+            value = data.lte.get(self.entity_description.data_key)
+            if self.entity_description.data_key == "session-uptime" and value:
+                return self._parse_uptime(str(value))
+            return value
         if self.entity_description.data_path == "system":
             return self._get_system_value()
+        if self.entity_description.data_path == "wifi":
+            return data.wifi_client_count
         return None
 
     @staticmethod

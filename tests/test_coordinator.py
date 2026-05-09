@@ -65,6 +65,19 @@ def mock_api():
                 }
             ],
             "/interface/lte/at-chat": [],
+            "/system/routerboard/print": [
+                {
+                    "serial-number": "HHD0AAWV5ZG",
+                    "model": "D53G-5HacD2HnD",
+                    "current-firmware": "7.18.2",
+                    "upgrade-firmware": "7.22.2",
+                }
+            ],
+            "/system/identity/print": [{"name": "MikroTik"}],
+            "/interface/wireless/registration-table/print": [
+                {"mac-address": "AA:BB:CC:DD:EE:FF"},
+                {"mac-address": "11:22:33:44:55:66"},
+            ],
         }
         return responses.get(path, [])
 
@@ -148,6 +161,11 @@ def test_fetch_data_success(coordinator, mock_api):
     assert data.system["cpu-load"] == 15
     assert len(data.interfaces) == 1
     assert data.interfaces[0]["name"] == "ether1"
+    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["current-firmware"] == "7.18.2"
+    assert data.routerboard["upgrade-firmware"] == "7.22.2"
+    assert data.identity == "MikroTik"
+    assert data.wifi_client_count == 2
 
 
 def test_fetch_data_connection_refused(coordinator):
@@ -431,3 +449,76 @@ async def test_async_update_data_unexpected_error(coordinator):
     ):
         await coordinator._async_update_data()
     mock_disconnect.assert_called_once()
+
+
+# --- routerboard / identity / wifi ---
+
+
+def test_fetch_data_routerboard(coordinator, mock_api):
+    """Test routerboard data is fetched."""
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["model"] == "D53G-5HacD2HnD"
+    assert data.routerboard["current-firmware"] == "7.18.2"
+    assert data.routerboard["upgrade-firmware"] == "7.22.2"
+
+
+def test_fetch_data_routerboard_trap_error(coordinator, mock_api):
+    """Test fetch continues when routerboard raises TrapError."""
+    original = mock_api.side_effect
+
+    def api_call(path, **kwargs):
+        if path == "/system/routerboard/print":
+            raise librouteros.exceptions.TrapError("no such command")
+        return original(path, **kwargs)
+
+    mock_api.side_effect = api_call
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.routerboard == {}
+    assert data.system["cpu-load"] == 15
+
+
+def test_fetch_data_identity(coordinator, mock_api):
+    """Test identity is fetched."""
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.identity == "MikroTik"
+
+
+def test_fetch_data_identity_trap_error(coordinator, mock_api):
+    """Test fetch continues when identity raises TrapError."""
+    original = mock_api.side_effect
+
+    def api_call(path, **kwargs):
+        if path == "/system/identity/print":
+            raise librouteros.exceptions.TrapError("access denied")
+        return original(path, **kwargs)
+
+    mock_api.side_effect = api_call
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.identity is None
+
+
+def test_fetch_data_wifi_client_count(coordinator, mock_api):
+    """Test WiFi client count is fetched."""
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.wifi_client_count == 2
+
+
+def test_fetch_data_wifi_trap_error(coordinator, mock_api):
+    """Test fetch continues when wireless table raises TrapError."""
+    original = mock_api.side_effect
+
+    def api_call(path, **kwargs):
+        if path == "/interface/wireless/registration-table/print":
+            raise librouteros.exceptions.TrapError("no such command")
+        return original(path, **kwargs)
+
+    mock_api.side_effect = api_call
+    with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
+        data = coordinator._fetch_data()
+    assert data.wifi_client_count is None
