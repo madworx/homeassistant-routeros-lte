@@ -19,6 +19,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     LTE_KEYS,
+    ROUTERBOARD_KEYS,
     SYSTEM_KEYS,
 )
 
@@ -32,6 +33,9 @@ class RouterOSData:
     lte: dict[str, Any] = field(default_factory=dict)
     system: dict[str, Any] = field(default_factory=dict)
     interfaces: list[dict[str, Any]] = field(default_factory=list)
+    routerboard: dict[str, Any] = field(default_factory=dict)
+    identity: str | None = None
+    wifi_client_count: int | None = None
 
 
 class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
@@ -203,6 +207,33 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
             ]
         except librouteros.exceptions.TrapError as err:
             _LOGGER.warning("Failed to fetch interface stats: %s", err)
+
+        try:
+            # Fetch routerboard info
+            routerboard = list(api("/system/routerboard/print"))
+            if routerboard:
+                data.routerboard = {
+                    k: routerboard[0].get(k)
+                    for k in ROUTERBOARD_KEYS
+                    if k in routerboard[0]
+                }
+        except librouteros.exceptions.TrapError as err:
+            _LOGGER.debug("Routerboard data not available: %s", err)
+
+        try:
+            # Fetch system identity
+            identity = list(api("/system/identity/print"))
+            if identity:
+                data.identity = identity[0].get("name")
+        except librouteros.exceptions.TrapError as err:
+            _LOGGER.debug("System identity not available: %s", err)
+
+        try:
+            # Fetch WiFi client count from wireless registration table
+            clients = list(api("/interface/wireless/registration-table/print"))
+            data.wifi_client_count = len(clients)
+        except librouteros.exceptions.TrapError:
+            _LOGGER.debug("Wireless registration table not available")
 
         return data
 

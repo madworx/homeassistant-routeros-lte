@@ -26,6 +26,15 @@ def mock_routeros_data():
             "mcc": "244",
             "mnc": "05",
             "connection-status": "connected",
+            "imei": "860561044494441",
+            "iccid": "89460851027003480376",
+            "current-operator": "Telenor SE",
+            "session-uptime": "1h30m",
+            "cqi": 11,
+            "ca-band": "B7@20Mhz earfcn: 2850 phy-cellid: 6",
+            "enb-id": 131380,
+            "phy-cellid": 84,
+            "data-class": "LTE",
         },
         system={
             "cpu-load": 15,
@@ -57,6 +66,15 @@ def mock_routeros_data():
                 "rx-packet": 6000,
             },
         ],
+        routerboard={
+            "serial-number": "HHD0AAWV5ZG",
+            "model": "D53G-5HacD2HnD",
+            "current-firmware": "7.18.2",
+            "upgrade-firmware": "7.22.2",
+            "firmware-type": "ipq4000L",
+        },
+        identity="MikroTik",
+        wifi_client_count=3,
     )
 
 
@@ -72,6 +90,19 @@ def mock_api():
                 {"name": "ether1", "type": "ether", "running": True},
                 {"name": "lte1", "type": "lte", "running": True},
             ]
+        if path == "/system/routerboard/print":
+            return [
+                {
+                    "serial-number": "HHD0AAWV5ZG",
+                    "model": "D53G-5HacD2HnD",
+                    "current-firmware": "7.18.2",
+                    "upgrade-firmware": "7.22.2",
+                }
+            ]
+        if path == "/system/identity/print":
+            return [{"name": "MikroTik"}]
+        if path == "/interface/wireless/registration-table/print":
+            return [{"mac-address": "AA:BB:CC:DD:EE:FF"}]
         return []
 
     api.side_effect = api_call
