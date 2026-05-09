@@ -27,7 +27,7 @@ async def async_setup_entry(
 class RouterOSFirmwareUpdate(RouterOSEntity, UpdateEntity):
     """Firmware update entity for RouterOS."""
 
-    _attr_name = "Firmware Update"
+    _attr_name = "RouterBOARD Firmware"
 
     def __init__(self, coordinator: RouterOSCoordinator) -> None:
         """Initialize the update entity."""
