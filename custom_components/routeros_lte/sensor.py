@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -326,8 +327,6 @@ class RouterOSSensor(RouterOSEntity, SensorEntity):
     @staticmethod
     def _parse_uptime(uptime_str: str) -> int:
         """Parse RouterOS uptime string (e.g. '3w2d12h05m30s') to seconds."""
-        import re
-
         total = 0
         for value, unit in re.findall(r"(\d+)([wdhms])", uptime_str):
             n = int(value)

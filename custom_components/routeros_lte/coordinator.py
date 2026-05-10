@@ -25,6 +25,17 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Compiled regex patterns
+_RE_BAND = re.compile(r"(B\d+)")
+_RE_TAC = re.compile(
+    r'\+QENG:\s*"servingcell",'
+    r'"[^"]*","LTE","[^"]*",'
+    r"(\d+),(\d+),[0-9A-Fa-f]+,\d+,\d+,\d+,\d+,\d+,"
+    r"([0-9A-Fa-f]+)"
+)
+
+_CONNECT_TIMEOUT: float = 10.0
+
 
 @dataclass
 class RouterOSData:
@@ -63,6 +74,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
             username=self._username,
             password=self._password,
             port=self._port,
+            timeout=_CONNECT_TIMEOUT,
         )
 
     def disconnect(self) -> None:
@@ -88,7 +100,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
         # Parse band from primary-band if band not already present
         # e.g. "B3@10Mhz earfcn: 1606 phy-cellid: 0" -> "B3"
         if "band" not in lte and "primary-band" in lte:
-            match = re.match(r"(B\d+)", str(lte["primary-band"]))
+            match = _RE_BAND.match(str(lte["primary-band"]))
             if match:
                 lte["band"] = match.group(1)
 
@@ -129,16 +141,10 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
                 output = result[0].get("output", "")
                 # Parse +QENG: "servingcell","state","LTE","FDD",MCC,MNC,cellID,
                 #   PCID,earfcn,band,UL_BW,DL_BW,TAC,...
-                match = re.search(
-                    r'\+QENG:\s*"servingcell",'
-                    r'"[^"]*","LTE","[^"]*",'
-                    r"(\d+),(\d+),[0-9A-Fa-f]+,\d+,\d+,\d+,\d+,\d+,"
-                    r"([0-9A-Fa-f]+)",
-                    output,
-                )
+                match = _RE_TAC.search(output)
                 if match:
                     return str(int(match.group(3), 16))
-        except Exception:
+        except (OSError, librouteros.exceptions.TrapError):
             _LOGGER.debug("AT command for TAC not available", exc_info=True)
         return None
 
@@ -178,7 +184,7 @@ class RouterOSCoordinator(DataUpdateCoordinator[RouterOSData]):
                     if tac is not None:
                         data.lte["lac"] = tac
         except librouteros.exceptions.TrapError as err:
-            _LOGGER.debug("LTE data not available: %s", err)
+            _LOGGER.warning("LTE data not available: %s", err)
 
         try:
             # Fetch system resources

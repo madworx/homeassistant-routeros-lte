@@ -109,6 +109,7 @@ class RouterOSLTEConfigFlow(ConfigFlow, domain=DOMAIN):
                 username=user_input[CONF_USERNAME],
                 password=user_input[CONF_PASSWORD],
                 port=user_input[CONF_PORT],
+                timeout=10.0,
             )
             try:
                 interfaces = list(api("/interface/print"))

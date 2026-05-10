@@ -100,6 +100,7 @@ def test_connect(coordinator):
             username="admin",
             password="password",
             port=8728,
+            timeout=10.0,
         )
         assert api is mock_connect.return_value
 
@@ -343,7 +344,7 @@ def test_fetch_tac_via_at_no_match():
 def test_fetch_tac_via_at_exception():
     """Test TAC returns None when AT command raises exception."""
     api = MagicMock()
-    api.side_effect = Exception("not supported")
+    api.side_effect = OSError("not supported")
     result = RouterOSCoordinator._fetch_tac_via_at(api, "*1")
     assert result is None
 
