@@ -67,7 +67,7 @@ def mock_routeros_data():
             },
         ],
         routerboard={
-            "serial-number": "HHD0AAWV5ZG",
+            "serial-number": "TESTSERIAL123",
             "model": "D53G-5HacD2HnD",
             "current-firmware": "7.18.2",
             "upgrade-firmware": "7.22.2",
@@ -93,7 +93,7 @@ def mock_api():
         if path == "/system/routerboard/print":
             return [
                 {
-                    "serial-number": "HHD0AAWV5ZG",
+                    "serial-number": "TESTSERIAL123",
                     "model": "D53G-5HacD2HnD",
                     "current-firmware": "7.18.2",
                     "upgrade-firmware": "7.22.2",

@@ -67,7 +67,7 @@ def mock_api():
             "/interface/lte/at-chat": [],
             "/system/routerboard/print": [
                 {
-                    "serial-number": "HHD0AAWV5ZG",
+                    "serial-number": "TESTSERIAL123",
                     "model": "D53G-5HacD2HnD",
                     "current-firmware": "7.18.2",
                     "upgrade-firmware": "7.22.2",
@@ -161,7 +161,7 @@ def test_fetch_data_success(coordinator, mock_api):
     assert data.system["cpu-load"] == 15
     assert len(data.interfaces) == 1
     assert data.interfaces[0]["name"] == "ether1"
-    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["serial-number"] == "TESTSERIAL123"
     assert data.routerboard["current-firmware"] == "7.18.2"
     assert data.routerboard["upgrade-firmware"] == "7.22.2"
     assert data.identity == "MikroTik"
@@ -458,7 +458,7 @@ def test_fetch_data_routerboard(coordinator, mock_api):
     """Test routerboard data is fetched."""
     with patch.object(coordinator, "_ensure_connected", return_value=mock_api):
         data = coordinator._fetch_data()
-    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["serial-number"] == "TESTSERIAL123"
     assert data.routerboard["model"] == "D53G-5HacD2HnD"
     assert data.routerboard["current-firmware"] == "7.18.2"
     assert data.routerboard["upgrade-firmware"] == "7.22.2"
