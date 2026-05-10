@@ -1,46 +1,170 @@
 """Tests for RouterOS LTE sensors."""
 
+from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
+
 from custom_components.routeros_lte.coordinator import RouterOSCoordinator, RouterOSData
-from custom_components.routeros_lte.sensor import RouterOSSensor
+from custom_components.routeros_lte.sensor import (
+    LTE_SENSORS,
+    SYSTEM_SENSORS,
+    WIFI_CLIENT_SENSOR,
+    RouterOSInterfaceSensor,
+    RouterOSSensor,
+    RouterOSSensorDescription,
+)
 
 
-def test_memory_usage_calculation():
-    """Test memory usage percentage calculation."""
-    data = RouterOSData(
-        lte={},
-        system={
-            "total-memory": 256_000_000,
-            "free-memory": 128_000_000,
-            "cpu-load": 10,
-            "uptime": "1d",
-            "total-hdd-space": 100_000_000,
-            "free-hdd-space": 40_000_000,
-        },
-        interfaces=[],
+def _make_coordinator(data: RouterOSData) -> MagicMock:
+    """Create a coordinator stub for entity tests."""
+    coordinator = MagicMock()
+    coordinator.data = data
+    coordinator.entry.entry_id = "test_entry"
+    coordinator._host = "192.168.88.1"
+    return coordinator
+
+
+def _get_description(
+    descriptions: tuple[RouterOSSensorDescription, ...],
+    key: str,
+) -> RouterOSSensorDescription:
+    """Return a sensor description by key."""
+    return next(description for description in descriptions if description.key == key)
+
+
+def test_lte_sensor_native_value():
+    """Test LTE sensor values are read from the entity."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={"rssi": -65},
+                system={},
+                interfaces=[],
+            )
+        ),
+        _get_description(LTE_SENSORS, "lte_rssi"),
     )
 
-    # Memory: (256M - 128M) / 256M * 100 = 50%
-    total = data.system["total-memory"]
-    free = data.system["free-memory"]
-    usage = round((total - free) / total * 100, 1)
-    assert usage == 50.0
+    assert sensor.native_value == -65
 
 
-def test_disk_usage_calculation():
-    """Test disk usage percentage calculation."""
-    data = RouterOSData(
-        lte={},
-        system={
-            "total-hdd-space": 100_000_000,
-            "free-hdd-space": 40_000_000,
-        },
-        interfaces=[],
+def test_memory_usage_sensor_native_value():
+    """Test memory usage is calculated by the entity."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={},
+                system={
+                    "total-memory": 256_000_000,
+                    "free-memory": 128_000_000,
+                },
+                interfaces=[],
+            )
+        ),
+        _get_description(SYSTEM_SENSORS, "memory_usage"),
     )
 
-    total = data.system["total-hdd-space"]
-    free = data.system["free-hdd-space"]
-    usage = round((total - free) / total * 100, 1)
-    assert usage == 60.0
+    assert sensor.native_value == 50.0
+
+
+def test_disk_usage_sensor_native_value():
+    """Test disk usage is calculated by the entity."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={},
+                system={
+                    "total-hdd-space": 100_000_000,
+                    "free-hdd-space": 40_000_000,
+                },
+                interfaces=[],
+            )
+        ),
+        _get_description(SYSTEM_SENSORS, "disk_usage"),
+    )
+
+    assert sensor.native_value == 60.0
+
+
+def test_system_uptime_sensor_native_value_from_string():
+    """Test system uptime is converted to a timestamp from a RouterOS string."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={},
+                system={"uptime": "1d2h"},
+                interfaces=[],
+            )
+        ),
+        _get_description(SYSTEM_SENSORS, "uptime"),
+    )
+    frozen_now = datetime(2026, 5, 10, 12, 0, tzinfo=UTC)
+
+    with patch(
+        "custom_components.routeros_lte.sensor.dt_util.utcnow",
+        return_value=frozen_now,
+    ):
+        assert sensor.native_value == frozen_now - timedelta(days=1, hours=2)
+
+
+def test_wifi_client_sensor_native_value():
+    """Test WiFi client count comes from coordinator data."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={},
+                system={},
+                interfaces=[],
+                wifi_client_count=5,
+            )
+        ),
+        WIFI_CLIENT_SENSOR,
+    )
+
+    assert sensor.native_value == 5
+
+
+def test_interface_sensor_native_value():
+    """Test interface sensor values are read from the matching interface."""
+    description = RouterOSSensorDescription(
+        key="iface_ether1_tx-byte",
+        name="ether1 TX Bytes",
+        data_path="interface",
+        data_key="tx-byte",
+    )
+    sensor = RouterOSInterfaceSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={},
+                system={},
+                interfaces=[
+                    {
+                        "name": "ether1",
+                        "tx-byte": 1_000_000,
+                    }
+                ],
+            )
+        ),
+        description,
+        "ether1",
+    )
+
+    assert sensor.native_value == 1_000_000
+
+
+def test_lte_session_uptime_sensor_native_value():
+    """Test LTE session uptime is parsed by the entity."""
+    sensor = RouterOSSensor(
+        _make_coordinator(
+            RouterOSData(
+                lte={"session-uptime": "1h30m"},
+                system={},
+                interfaces=[],
+            )
+        ),
+        _get_description(LTE_SENSORS, "lte_session_uptime"),
+    )
+
+    assert sensor.native_value == 5400
 
 
 def test_lte_data_extraction():
@@ -243,12 +367,12 @@ def test_routerboard_data():
         system={},
         interfaces=[],
         routerboard={
-            "serial-number": "HHD0AAWV5ZG",
+            "serial-number": "TESTSERIAL123",
             "model": "D53G-5HacD2HnD",
             "current-firmware": "7.18.2",
             "upgrade-firmware": "7.22.2",
         },
     )
-    assert data.routerboard["serial-number"] == "HHD0AAWV5ZG"
+    assert data.routerboard["serial-number"] == "TESTSERIAL123"
     assert data.routerboard["current-firmware"] == "7.18.2"
     assert data.routerboard["upgrade-firmware"] == "7.22.2"

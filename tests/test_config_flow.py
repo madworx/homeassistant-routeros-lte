@@ -7,8 +7,16 @@ import pytest
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.routeros_lte.const import CONF_MONITORED_INTERFACES, DOMAIN
+from custom_components.routeros_lte.const import (
+    CONF_HOST,
+    CONF_MONITORED_INTERFACES,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    DOMAIN,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -104,6 +112,64 @@ async def test_form_invalid_auth(hass: HomeAssistant) -> None:
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "invalid_auth"}
+
+
+async def test_form_unknown_error(hass: HomeAssistant) -> None:
+    """Test handling of unexpected errors."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    with patch(
+        "custom_components.routeros_lte.config_flow.librouteros.connect",
+        side_effect=RuntimeError("boom"),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                "host": "192.168.88.1",
+                "port": 8728,
+                "username": "admin",
+                "password": "secret",
+            },
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+
+
+async def test_form_duplicate_router_aborts(
+    hass: HomeAssistant,
+    mock_connect,
+) -> None:
+    """Test duplicate router configuration is rejected."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.88.1",
+            CONF_PORT: 8728,
+            CONF_USERNAME: "admin",
+            CONF_PASSWORD: "secret",
+        },
+        unique_id="192.168.88.1:8728",
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            "host": "192.168.88.1",
+            "port": 8728,
+            "username": "admin",
+            "password": "secret",
+        },
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
 
 
 async def test_options_flow_shows_interfaces(
